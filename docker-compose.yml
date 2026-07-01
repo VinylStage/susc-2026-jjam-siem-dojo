@@ -1,0 +1,60 @@
+services:
+  opensearch:
+    image: opensearchproject/opensearch:3.5.0
+    container_name: jjam-opensearch
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS}
+      - plugins.ml_commons.only_run_on_ml_node=false
+      - plugins.ml_commons.model_access_control_enabled=true
+      - plugins.ml_commons.native_memory_threshold=100
+      - plugins.ml_commons.jvm_heap_memory_threshold=95
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - jjam-net
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:3.5.0
+    container_name: jjam-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=["https://opensearch:9200"]
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - jjam-net
+
+  ollama:
+    image: ollama/ollama
+    container_name: jjam-ollama
+    profiles:
+      - ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - jjam-net
+
+volumes:
+  opensearch-data:
+  ollama-data:
+
+networks:
+  jjam-net:
+    driver: bridge

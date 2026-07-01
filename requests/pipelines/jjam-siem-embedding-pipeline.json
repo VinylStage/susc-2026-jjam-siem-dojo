@@ -1,0 +1,11 @@
+{
+  "description": "SIEM description to embedding",
+  "processors": [
+    {
+      "text_embedding": {
+        "model_id": "EMBEDDING_MODEL_ID_PLACEHOLDER",
+        "field_map": { "description": "description_embedding" }
+      }
+    }
+  ]
+}

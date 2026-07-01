@@ -1,0 +1,28 @@
+{
+  "name": "jjam-siem-severity-detector",
+  "description": "severity별 이벤트 급증 탐지",
+  "time_field": "timestamp",
+  "indices": ["jjam-siem-logs"],
+  "detection_interval": { "period": { "interval": 1, "unit": "Days" } },
+  "window_delay": { "period": { "interval": 0, "unit": "Minutes" } },
+  "feature_attributes": [
+    {
+      "feature_name": "critical_count",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "critical_count": {
+          "filter": { "term": { "severity": "critical" } },
+          "aggs": { "count": { "value_count": { "field": "event_id" } } }
+        }
+      }
+    },
+    {
+      "feature_name": "avg_risk_score",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "avg_risk_score": { "avg": { "field": "advanced_metadata.risk_score" } }
+      }
+    }
+  ],
+  "category_field": ["event_type"]
+}

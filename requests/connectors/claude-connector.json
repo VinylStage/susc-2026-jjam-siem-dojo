@@ -1,0 +1,24 @@
+{
+  "name": "Anthropic Claude Connector",
+  "description": "Claude API connector for instructor validation",
+  "version": 1,
+  "protocol": "http",
+  "parameters": {
+    "model": "claude-sonnet-5",
+    "anthropic_version": "2023-06-01"
+  },
+  "credential": { "anthropic_key": "PLACEHOLDER" },
+  "actions": [
+    {
+      "action_type": "predict",
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+        "x-api-key": "${credential.anthropic_key}",
+        "anthropic-version": "${parameters.anthropic_version}",
+        "content-type": "application/json"
+      },
+      "request_body": "{ \"model\": \"${parameters.model}\", \"max_tokens\": 1024, \"messages\": [{\"role\":\"user\",\"content\":\"${parameters.prompt}\"}] }"
+    }
+  ]
+}

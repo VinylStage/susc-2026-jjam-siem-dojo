@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "index.knn": true,
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "default_pipeline": "jjam-siem-embedding-pipeline"
+  },
+  "mappings": {
+    "properties": {
+      "description": { "type": "text" },
+      "description_embedding": {
+        "type": "knn_vector",
+        "dimension": 384,
+        "method": { "name": "hnsw", "engine": "lucene" }
+      },
+      "event_type": { "type": "keyword" },
+      "severity": { "type": "keyword" },
+      "alert_type": { "type": "keyword" },
+      "advanced_metadata": {
+        "properties": {
+          "risk_score": { "type": "float" },
+          "confidence": { "type": "float" }
+        }
+      },
+      "timestamp": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
+      "src_ip": { "type": "ip" },
+      "dst_ip": { "type": "ip" },
+      "action": { "type": "keyword" },
+      "category": { "type": "keyword" }
+    }
+  }
+}

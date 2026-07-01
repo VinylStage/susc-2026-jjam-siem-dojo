@@ -1,0 +1,17 @@
+{
+  "name": "OpenAI GPT Connector",
+  "description": "OpenAI GPT-4o-mini connector for jjam-siem-dojo",
+  "version": 1,
+  "protocol": "http",
+  "parameters": { "model": "gpt-4o-mini" },
+  "credential": { "openAI_key": "PLACEHOLDER" },
+  "actions": [
+    {
+      "action_type": "predict",
+      "method": "POST",
+      "url": "https://api.openai.com/v1/chat/completions",
+      "headers": { "Authorization": "Bearer ${credential.openAI_key}" },
+      "request_body": "{ \"model\": \"${parameters.model}\", \"messages\": [{\"role\":\"user\",\"content\":\"${parameters.prompt}\"}] }"
+    }
+  ]
+}

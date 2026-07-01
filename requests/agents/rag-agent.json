@@ -1,0 +1,25 @@
+{
+  "name": "jjam_siem_rag_agent",
+  "type": "flow",
+  "description": "SIEM RAG agent for jjam-siem-dojo",
+  "tools": [
+    {
+      "type": "VectorDBTool",
+      "parameters": {
+        "model_id": "EMBEDDING_MODEL_ID_PLACEHOLDER",
+        "index": "jjam-siem-vector",
+        "embedding_field": "description_embedding",
+        "source_field": ["description", "severity", "alert_type", "advanced_metadata", "src_ip", "action"],
+        "input": "${parameters.question}"
+      }
+    },
+    {
+      "type": "MLModelTool",
+      "description": "LLM analysis",
+      "parameters": {
+        "model_id": "LLM_MODEL_ID_PLACEHOLDER",
+        "prompt": "You are a SOC analyst. Based on these security events, answer the question.\n\nEvents:\n${parameters.VectorDBTool.output}\n\nQuestion: ${parameters.question}\n\nProvide a concise analysis."
+      }
+    }
+  ]
+}

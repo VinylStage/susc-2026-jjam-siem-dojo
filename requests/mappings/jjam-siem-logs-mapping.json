@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "event_id": { "type": "keyword" },
+      "timestamp": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
+      "event_type": { "type": "keyword" },
+      "source": { "type": "keyword" },
+      "severity": { "type": "keyword" },
+      "raw_log": { "type": "text" },
+      "advanced_metadata": {
+        "properties": {
+          "risk_score": { "type": "float" },
+          "confidence": { "type": "float" },
+          "geo_location": { "type": "keyword" }
+        }
+      },
+      "user": { "type": "keyword" },
+      "action": { "type": "keyword" },
+      "object": { "type": "keyword" },
+      "process_id": { "type": "integer" },
+      "parent_process": { "type": "keyword" },
+      "additional_info": { "type": "text" },
+      "description": {
+        "type": "text",
+        "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+      },
+      "behavioral_analytics": {
+        "properties": {
+          "baseline_deviation": { "type": "float" },
+          "entropy": { "type": "float" },
+          "frequency_anomaly": { "type": "boolean" },
+          "sequence_anomaly": { "type": "boolean" }
+        }
+      },
+      "device_type": { "type": "keyword" },
+      "device_id": { "type": "keyword" },
+      "firmware_version": { "type": "keyword" },
+      "src_ip": { "type": "ip" },
+      "dst_ip": { "type": "ip" },
+      "alert_type": { "type": "keyword" },
+      "signature_id": { "type": "keyword" },
+      "category": { "type": "keyword" },
+      "cloud_service": { "type": "keyword" },
+      "resource_id": { "type": "keyword" },
+      "model_id": { "type": "keyword" },
+      "input_hash": { "type": "keyword" },
+      "output_hash": { "type": "keyword" },
+      "src_port": { "type": "integer" },
+      "dst_port": { "type": "integer" },
+      "protocol": { "type": "keyword" },
+      "bytes": { "type": "long" },
+      "duration": { "type": "integer" },
+      "method": { "type": "keyword" },
+      "mac_address": { "type": "keyword" }
+    }
+  }
+}

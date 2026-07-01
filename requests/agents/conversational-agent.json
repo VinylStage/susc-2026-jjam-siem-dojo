@@ -1,0 +1,38 @@
+{
+  "name": "jjam_siem_security_analyst",
+  "type": "conversational",
+  "description": "SIEM conversational security analyst agent for jjam-siem-dojo",
+  "llm": {
+    "model_id": "LLM_MODEL_ID_PLACEHOLDER",
+    "parameters": {
+      "max_iteration": 5,
+      "response_filter": "RESPONSE_FILTER_PLACEHOLDER"
+    }
+  },
+  "memory": { "type": "conversation_index" },
+  "tools": [
+    {
+      "type": "SearchIndexTool",
+      "description": "Search jjam-siem-logs index. Fields: event_type, severity, alert_type, src_ip, dst_ip, advanced_metadata.risk_score, advanced_metadata.confidence, bytes, duration, action, category, protocol, description, timestamp."
+    },
+    {
+      "type": "IndexMappingTool",
+      "description": "Get index field mappings."
+    },
+    {
+      "type": "VectorDBTool",
+      "parameters": {
+        "model_id": "EMBEDDING_MODEL_ID_PLACEHOLDER",
+        "index": "jjam-siem-vector",
+        "embedding_field": "description_embedding",
+        "source_field": ["description", "severity", "alert_type", "advanced_metadata"],
+        "input": "${parameters.question}"
+      },
+      "description": "Semantic search on SIEM logs."
+    },
+    {
+      "type": "CatIndexTool",
+      "description": "List available indexes."
+    }
+  ]
+}

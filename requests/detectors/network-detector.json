@@ -1,0 +1,33 @@
+{
+  "name": "jjam-siem-network-anomaly",
+  "description": "방화벽 트래픽 이상탐지",
+  "time_field": "timestamp",
+  "indices": ["jjam-siem-logs"],
+  "filter_query": {
+    "bool": {
+      "must": [
+        { "term": { "event_type": "firewall" } },
+        { "exists": { "field": "bytes" } }
+      ]
+    }
+  },
+  "detection_interval": { "period": { "interval": 1, "unit": "Days" } },
+  "window_delay": { "period": { "interval": 0, "unit": "Minutes" } },
+  "feature_attributes": [
+    {
+      "feature_name": "total_bytes",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "total_bytes": { "sum": { "field": "bytes" } }
+      }
+    },
+    {
+      "feature_name": "event_count",
+      "feature_enabled": true,
+      "aggregation_query": {
+        "event_count": { "value_count": { "field": "event_id" } }
+      }
+    }
+  ],
+  "category_field": ["protocol"]
+}
