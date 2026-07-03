@@ -4,6 +4,7 @@
   "version": 1,
   "protocol": "http",
   "parameters": { "model": "PLACEHOLDER" },
+  "credential": { "dummy_key": "dummy_value" },
   "actions": [
     {
       "action_type": "predict",

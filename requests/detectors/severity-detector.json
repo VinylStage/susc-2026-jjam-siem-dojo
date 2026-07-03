@@ -3,7 +3,7 @@
   "description": "severity별 이벤트 급증 탐지",
   "time_field": "timestamp",
   "indices": ["jjam-siem-logs"],
-  "detection_interval": { "period": { "interval": 1, "unit": "Days" } },
+  "detection_interval": { "period": { "interval": 10, "unit": "Minutes" } },
   "window_delay": { "period": { "interval": 0, "unit": "Minutes" } },
   "feature_attributes": [
     {

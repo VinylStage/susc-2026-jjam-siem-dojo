@@ -44,48 +44,74 @@ case "$OPTION" in
 esac
 
 echo "Registering connector (option $OPTION)..."
-CONNECTOR_ID=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/connectors/_create" \
+CONNECTOR_RESPONSE=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/connectors/_create" \
   -H "Content-Type: application/json" \
-  --data-binary @/tmp/jjam-connector.json | jq -r '.connector_id')
-
+  --data-binary @/tmp/jjam-connector.json)
+CONNECTOR_ID=$(echo "$CONNECTOR_RESPONSE" | jq -r '.connector_id')
 echo "connector_id: $CONNECTOR_ID"
+if [ -z "$CONNECTOR_ID" ] || [ "$CONNECTOR_ID" = "null" ]; then
+  echo "Connector registration failed. Full response:"
+  echo "$CONNECTOR_RESPONSE" | jq .
+  exit 1
+fi
 jq --arg id "$CONNECTOR_ID" --arg opt "$OPTION" --arg rf "$RESPONSE_FILTER" \
   '.connector_id = $id | .llm_option = $opt | .response_filter = $rf' \
   "$IDS_FILE" > "$IDS_FILE.tmp" && mv "$IDS_FILE.tmp" "$IDS_FILE"
 
 echo "Registering LLM model..."
-TASK_ID=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/models/_register" \
+REGISTER_RESPONSE=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/models/_register" \
   -H "Content-Type: application/json" \
   -d "{
     \"name\": \"jjam-siem-llm-option-$OPTION\",
     \"function_name\": \"remote\",
     \"model_group_id\": \"$MODEL_GROUP_ID\",
     \"connector_id\": \"$CONNECTOR_ID\"
-  }" | jq -r '.task_id')
-
+  }")
+TASK_ID=$(echo "$REGISTER_RESPONSE" | jq -r '.task_id')
 echo "task_id: $TASK_ID"
+if [ -z "$TASK_ID" ] || [ "$TASK_ID" = "null" ]; then
+  echo "LLM model registration request failed. Full response:"
+  echo "$REGISTER_RESPONSE" | jq .
+  exit 1
+fi
+
 STATE=""
 until [ "$STATE" = "COMPLETED" ]; do
   sleep 3
   STATE=$(curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/tasks/$TASK_ID" | jq -r '.state')
   echo "  state: $STATE"
-  if [ "$STATE" = "FAILED" ]; then
+  if [ "$STATE" = "FAILED" ] || [ "$STATE" = "null" ]; then
     echo "LLM model registration failed."
+    curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/tasks/$TASK_ID" | jq .
     exit 1
   fi
 done
 
 LLM_MODEL_ID=$(curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/tasks/$TASK_ID" | jq -r '.model_id')
+if [ -z "$LLM_MODEL_ID" ] || [ "$LLM_MODEL_ID" = "null" ]; then
+  echo "Could not read model_id from completed task."
+  curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/tasks/$TASK_ID" | jq .
+  exit 1
+fi
 jq --arg id "$LLM_MODEL_ID" '.llm_model_id = $id' "$IDS_FILE" > "$IDS_FILE.tmp" && mv "$IDS_FILE.tmp" "$IDS_FILE"
 
 echo "Deploying LLM model..."
 curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/models/$LLM_MODEL_ID/_deploy" | jq .
 
 STATE=""
+RETRIES=0
 until [ "$STATE" = "DEPLOYED" ]; do
   sleep 3
   STATE=$(curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/models/$LLM_MODEL_ID" | jq -r '.model_state')
   echo "  model_state: $STATE"
+  if [ "$STATE" = "DEPLOY_FAILED" ] || [ "$STATE" = "null" ]; then
+    RETRIES=$((RETRIES + 1))
+    if [ "$RETRIES" -ge 5 ]; then
+      echo "LLM model deploy failed or model not found after retries."
+      curl -sk -u "$AUTH" "$OS_HOST/_plugins/_ml/models/$LLM_MODEL_ID" | jq .
+      exit 1
+    fi
+  fi
 done
 
 echo "LLM model deployed (option $OPTION): $LLM_MODEL_ID"

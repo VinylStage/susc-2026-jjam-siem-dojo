@@ -33,9 +33,10 @@ cd ..
 for f in toolkit/siem_data/variations/advanced_siem/*.ndjson; do
   echo "Ingesting: $f"
   # OpenSearch 기본 http.max_content_length(100MB)를 넘지 않도록 20,000줄(=1만 건) 단위로 쪼개서 적재
+  # macOS(BSD split)와 Linux(GNU split) 둘 다 지원하는 옵션만 사용 (--numeric-suffixes, --additional-suffix는 GNU 전용이라 macOS에서 깨짐)
   SPLIT_DIR=$(mktemp -d)
-  split -l 20000 --numeric-suffixes=1 --additional-suffix=.ndjson "$f" "$SPLIT_DIR/part"
-  for part in "$SPLIT_DIR"/part*.ndjson; do
+  split -l 20000 "$f" "$SPLIT_DIR/part_"
+  for part in "$SPLIT_DIR"/part_*; do
     curl -sk -u "$AUTH" -X POST "$OS_HOST/_bulk" \
       -H "Content-Type: application/x-ndjson" \
       --data-binary @"$part" \

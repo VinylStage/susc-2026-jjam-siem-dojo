@@ -24,6 +24,7 @@ curl -sk -u "$AUTH" -X PUT "$OS_HOST/_cluster/settings" \
   -H "Content-Type: application/json" \
   -d '{
     "persistent": {
+      "plugins.ml_commons.connector.private_ip_enabled": true,
       "plugins.ml_commons.trusted_connector_endpoints_regex": [
         "^https://api\\.openai\\.com/.*$",
         "^https://api\\.anthropic\\.com/.*$",

@@ -11,7 +11,7 @@
       ]
     }
   },
-  "detection_interval": { "period": { "interval": 1, "unit": "Days" } },
+  "detection_interval": { "period": { "interval": 10, "unit": "Minutes" } },
   "window_delay": { "period": { "interval": 0, "unit": "Minutes" } },
   "feature_attributes": [
     {

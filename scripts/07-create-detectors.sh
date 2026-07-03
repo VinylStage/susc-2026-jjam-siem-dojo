@@ -14,7 +14,8 @@ IDS_FILE="ids.json"
 WINDOW_SECONDS="${WINDOW_SECONDS:-86400}"
 BUFFER_SECONDS=3600
 
-NOW_MS=$(date +%s%3N)
+# macOS(BSD date)는 %N(나노초)을 지원 안 해서 %s%3N이 깨짐 — 초 단위만 쓰고 *1000으로 밀리초 변환(이 용도엔 서브초 정밀도 불필요)
+NOW_MS=$(( $(date +%s) * 1000 ))
 START_MS=$(( NOW_MS - (WINDOW_SECONDS + BUFFER_SECONDS) * 1000 ))
 END_MS=$(( NOW_MS + BUFFER_SECONDS * 1000 ))
 
@@ -24,9 +25,15 @@ register_and_run() {
   FILE="$1"
   KEY="$2"
 
-  DETECTOR_ID=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors" \
+  CREATE_RESPONSE=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors" \
     -H "Content-Type: application/json" \
-    --data-binary @"$FILE" | jq -r '._id')
+    --data-binary @"$FILE")
+  DETECTOR_ID=$(echo "$CREATE_RESPONSE" | jq -r '._id')
+  if [ -z "$DETECTOR_ID" ] || [ "$DETECTOR_ID" = "null" ]; then
+    echo "$KEY 생성 실패. 원본 응답:"
+    echo "$CREATE_RESPONSE" | jq .
+    return 1
+  fi
 
   echo "$KEY detector_id: $DETECTOR_ID"
   jq --arg id "$DETECTOR_ID" --arg key "$KEY" '.[$key] = $id' "$IDS_FILE" > "$IDS_FILE.tmp" && mv "$IDS_FILE.tmp" "$IDS_FILE"
