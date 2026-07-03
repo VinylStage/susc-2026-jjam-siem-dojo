@@ -3,7 +3,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  source .env
+  set +a
 fi
 
 OS_HOST="https://localhost:9200"
@@ -30,10 +32,16 @@ cd ..
 
 for f in toolkit/siem_data/variations/advanced_siem/*.ndjson; do
   echo "Ingesting: $f"
-  curl -sk -u "$AUTH" -X POST "$OS_HOST/_bulk" \
-    -H "Content-Type: application/x-ndjson" \
-    --data-binary @"$f" \
-    | python3 -c "import sys,json; r=json.load(sys.stdin); print('errors:', r['errors'], '| took:', r['took'], 'ms')"
+  # OpenSearch 기본 http.max_content_length(100MB)를 넘지 않도록 20,000줄(=1만 건) 단위로 쪼개서 적재
+  SPLIT_DIR=$(mktemp -d)
+  split -l 20000 --numeric-suffixes=1 --additional-suffix=.ndjson "$f" "$SPLIT_DIR/part"
+  for part in "$SPLIT_DIR"/part*.ndjson; do
+    curl -sk -u "$AUTH" -X POST "$OS_HOST/_bulk" \
+      -H "Content-Type: application/x-ndjson" \
+      --data-binary @"$part" \
+      | python3 -c "import sys,json; r=json.load(sys.stdin); print('  chunk errors:', r['errors'], '| took:', r['took'], 'ms')"
+  done
+  rm -rf "$SPLIT_DIR"
 done
 
 echo "Document count:"

@@ -4,6 +4,13 @@ siem_data/
 ids.json
 *.log
 .DS_Store
+
+# 강사 개인 데모/준비 자료 - 학생용 레포에 포함하지 않음
+homelab-two-node/
+macbook-single-machine/
+instructor-guide/
+opensearch-siem-session/
+
 # Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,dotenv
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,dotenv
 

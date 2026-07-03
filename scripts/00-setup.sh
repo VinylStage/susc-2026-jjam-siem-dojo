@@ -3,7 +3,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  source .env
+  set +a
 fi
 
 LLM_OPTION="${LLM_OPTION:-a}"
