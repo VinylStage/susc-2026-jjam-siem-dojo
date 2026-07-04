@@ -5,6 +5,11 @@
   "protocol": "http",
   "parameters": { "model": "PLACEHOLDER" },
   "credential": { "dummy_key": "dummy_value" },
+  "client_config": {
+    "max_connection": 30,
+    "connection_timeout": 30000,
+    "read_timeout": 120000
+  },
   "actions": [
     {
       "action_type": "predict",

@@ -5,7 +5,7 @@
   "llm": {
     "model_id": "LLM_MODEL_ID_PLACEHOLDER",
     "parameters": {
-      "max_iteration": 5,
+      "max_iteration": 8,
       "response_filter": "RESPONSE_FILTER_PLACEHOLDER"
     }
   },
@@ -13,7 +13,7 @@
   "tools": [
     {
       "type": "SearchIndexTool",
-      "description": "Search jjam-siem-logs index. Fields: event_type, severity, alert_type, src_ip, dst_ip, advanced_metadata.risk_score, advanced_metadata.confidence, bytes, duration, action, category, protocol, description, timestamp."
+      "description": "Search jjam-siem-logs index. All fields are already type 'keyword' or 'date' - do NOT append '.keyword' to any field name (e.g. use event_type not event_type.keyword). Fields: event_type, severity, alert_type, src_ip, dst_ip, advanced_metadata.risk_score, advanced_metadata.confidence, bytes, duration, action, category, protocol, description, timestamp (date format 'yyyy-MM-dd HH:mm:ss'). IMPORTANT - keep the query SIMPLE, do not write aggregations: the action_input value itself IS already the final JSON string, do not add extra escaping or quote layers. Use ONLY this exact shape (index + a plain query with size, no aggs): {\"index\": \"jjam-siem-logs\", \"query\": {\"size\": 20, \"query\": {\"term\": {\"severity\": \"critical\"}}}}. If the question needs counting or 'which value appears most' (e.g. top event_type), do NOT try to write an aggregation - instead retrieve up to 50 matching documents with a simple query like above, then count/summarize the field values yourself from the returned documents."
     },
     {
       "type": "IndexMappingTool",
@@ -31,7 +31,7 @@
       "description": "Semantic search on SIEM logs."
     },
     {
-      "type": "CatIndexTool",
+      "type": "ListIndexTool",
       "description": "List available indexes."
     }
   ]

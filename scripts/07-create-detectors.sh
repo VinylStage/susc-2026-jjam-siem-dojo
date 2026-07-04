@@ -11,15 +11,18 @@ fi
 OS_HOST="https://localhost:9200"
 AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
 IDS_FILE="ids.json"
-WINDOW_SECONDS="${WINDOW_SECONDS:-86400}"
 BUFFER_SECONDS=3600
+# 2026-07-04 실측: historical analysis 조회 구간을 실제 데이터 범위(siem-vary --window, 기본 24h)보다
+# 훨씬 넓게 잡으면(데이터 없는 구간 -> 갑자기 데이터 있는 구간 전환) RCF가 그 경계를 자연스럽게 anomaly로 잡음.
+# 라이브 데모에서 "데이터가 없다가 갑자기 생기는 지점"이 grade 1.0으로 튀는 걸 보여주는 용도 — 별도 스파이크 주입 없이도 재현됨.
+HISTORICAL_LOOKBACK_SECONDS="${HISTORICAL_LOOKBACK_SECONDS:-2592000}"  # 기본 30일
 
 # macOS(BSD date)는 %N(나노초)을 지원 안 해서 %s%3N이 깨짐 — 초 단위만 쓰고 *1000으로 밀리초 변환(이 용도엔 서브초 정밀도 불필요)
 NOW_MS=$(( $(date +%s) * 1000 ))
-START_MS=$(( NOW_MS - (WINDOW_SECONDS + BUFFER_SECONDS) * 1000 ))
+START_MS=$(( NOW_MS - HISTORICAL_LOOKBACK_SECONDS * 1000 ))
 END_MS=$(( NOW_MS + BUFFER_SECONDS * 1000 ))
 
-echo "Historical Analysis range: $START_MS ~ $END_MS (window=${WINDOW_SECONDS}s + ${BUFFER_SECONDS}s buffer)"
+echo "Historical Analysis range: $START_MS ~ $END_MS (lookback=${HISTORICAL_LOOKBACK_SECONDS}s, 실제 데이터 범위보다 넓게 잡아 자연 anomaly 유도)"
 
 register_and_run() {
   FILE="$1"
