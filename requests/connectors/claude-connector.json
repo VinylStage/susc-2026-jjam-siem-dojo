@@ -18,7 +18,7 @@
         "anthropic-version": "${parameters.anthropic_version}",
         "content-type": "application/json"
       },
-      "request_body": "{ \"model\": \"${parameters.model}\", \"max_tokens\": 1024, \"messages\": [{\"role\":\"user\",\"content\":\"${parameters.prompt}\"}] }"
+      "request_body": "{ \"model\": \"${parameters.model}\", \"max_tokens\": 2048, \"messages\": [{\"role\":\"user\",\"content\":\"${parameters.prompt}\"}] }"
     }
   ]
 }
