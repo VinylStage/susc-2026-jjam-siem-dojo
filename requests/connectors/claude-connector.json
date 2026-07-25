@@ -8,6 +8,11 @@
     "anthropic_version": "2023-06-01"
   },
   "credential": { "anthropic_key": "PLACEHOLDER" },
+  "client_config": {
+    "max_connection": 30,
+    "connection_timeout": 30000,
+    "read_timeout": 120000
+  },
   "actions": [
     {
       "action_type": "predict",
