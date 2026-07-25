@@ -91,3 +91,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,dotenv
+
+# Cowork/Claude 임시 정리 폴더 (기기 마운트에서 파일 삭제가 안 될 때 대피용) + 백업 파일
+_to_delete/
+*.bak
