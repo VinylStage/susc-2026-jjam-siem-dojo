@@ -16,8 +16,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-OS_HOST="https://localhost:9200"
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+OS_HOST="http://localhost:9200"
 IDS_FILE="ids.json"
 
 EMBEDDING_MODEL_ID=$(jq -r '.embedding_model_id' "$IDS_FILE")
@@ -30,7 +29,7 @@ jq --arg emb "$EMBEDDING_MODEL_ID" --arg llm "$LLM_MODEL_ID" \
    | (.tools[] | select(.type=="MLModelTool") | .parameters.model_id) = $llm' \
   requests/agents/rag-agent.json > /tmp/jjam-rag-agent.json
 
-RAG_AGENT_ID=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/agents/_register" \
+RAG_AGENT_ID=$(curl -s -X POST "$OS_HOST/_plugins/_ml/agents/_register" \
   -H "Content-Type: application/json" \
   --data-binary @/tmp/jjam-rag-agent.json | jq -r '.agent_id')
 
@@ -44,7 +43,7 @@ jq --arg emb "$EMBEDDING_MODEL_ID" --arg llm "$LLM_MODEL_ID" --arg rf "$RESPONSE
    | (.tools[] | select(.type=="VectorDBTool") | .parameters.model_id) = $emb' \
   requests/agents/conversational-agent.json > /tmp/jjam-conv-agent.json
 
-CONV_AGENT_ID=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_ml/agents/_register" \
+CONV_AGENT_ID=$(curl -s -X POST "$OS_HOST/_plugins/_ml/agents/_register" \
   -H "Content-Type: application/json" \
   --data-binary @/tmp/jjam-conv-agent.json | jq -r '.agent_id')
 

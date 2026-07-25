@@ -40,9 +40,9 @@
 
 ## OpenSearch 클러스터 / 보안
 
-### 이 레포는 보안 플러그인을 비활성화하지 않습니다
+### 이 레포는 보안 플러그인을 비활성화합니다 (2026-07-24 변경)
 
-이전 검증 가이드(`DISABLE_SECURITY_PLUGIN=true`)와 달리, 이 학생용 레포는 `OPENSEARCH_INITIAL_ADMIN_PASSWORD`만 설정해 보안 플러그인을 기본값(활성화) 그대로 둡니다. 즉 API는 `https://localhost:9200`으로만 접근 가능하고, 자체 서명 인증서라 `curl`에는 항상 `-k`(insecure) 플래그가 필요합니다. `-k` 없이 호출하면 인증서 검증 실패로 연결이 끊깁니다.
+실습 난이도를 낮추기 위해 `docker-compose.yml`의 `opensearch` 서비스에 `DISABLE_SECURITY_PLUGIN=true`를 설정했습니다(이전엔 `OPENSEARCH_INITIAL_ADMIN_PASSWORD`만 설정해 보안 플러그인을 기본값(활성화)으로 뒀었는데, 그 방식은 폐기됨). 즉 API는 `http://localhost:9200`으로 인증 없이 바로 접근 가능하고, `curl`에 `-k`나 `-u admin:...`을 붙일 필요가 없습니다. `plugins.ml_commons.model_access_control_enabled`도 `false`로 같이 꺼져 있습니다(보안 플러그인이 꺼진 상태에서 모델 접근제어만 켜두면 의미도 없고 오히려 권한 에러를 유발할 수 있음). **이건 실습 편의를 위한 설정이라 프로덕션에서는 절대 이렇게 쓰면 안 됩니다.**
 
 ### Connector 호출이 막힘 (trusted_connector_endpoints_regex)
 

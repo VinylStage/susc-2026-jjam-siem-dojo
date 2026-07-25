@@ -19,7 +19,6 @@ cp .env.example .env
 
 | 변수 | 설명 |
 |---|---|
-| `OPENSEARCH_INITIAL_ADMIN_PASSWORD` | OpenSearch 3.x 보안 플러그인 admin 계정 비밀번호 (대문자/숫자/특수문자 포함 8자 이상) |
 | `LLM_OPTION` | `a`(OpenAI, 기본) / `b`(Ollama) / `c`(Claude API) |
 | `OPENAI_API_KEY` | Option A 사용 시 |
 | `ANTHROPIC_API_KEY` | Option C 사용 시 |
@@ -51,18 +50,15 @@ bash scripts/00-setup.sh
 
 ## 4. 접속 확인
 
-- Dashboards: http://localhost:5601 (admin / `.env`에 설정한 비밀번호)
-- OpenSearch API: https://localhost:9200 (자체 서명 인증서 사용 — `curl -k`)
+- Dashboards: http://localhost:5601 (보안 플러그인 비활성화 — 로그인 불필요)
+- OpenSearch API: http://localhost:9200 (보안 플러그인 비활성화, 인증서/인증 헤더 불필요)
 
 ## 5. 동작 확인 쿼리
 
 ```bash
-source .env
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+curl -s "http://localhost:9200/jjam-siem-logs/_count" | jq .
 
-curl -sk -u "$AUTH" "https://localhost:9200/jjam-siem-logs/_count" | jq .
-
-curl -sk -u "$AUTH" -X POST "https://localhost:9200/jjam-siem-logs/_search" \
+curl -s -X POST "http://localhost:9200/jjam-siem-logs/_search" \
   -H "Content-Type: application/json" \
   -d '{
     "query": { "range": { "advanced_metadata.risk_score": { "gte": 80 } } },
@@ -77,7 +73,7 @@ Agent 테스트:
 ```bash
 CONV_AGENT_ID=$(jq -r '.conversational_agent_id' ids.json)
 
-curl -sk -u "$AUTH" -X POST "https://localhost:9200/_plugins/_ml/agents/$CONV_AGENT_ID/_execute" \
+curl -s -X POST "http://localhost:9200/_plugins/_ml/agents/$CONV_AGENT_ID/_execute" \
   -H "Content-Type: application/json" \
   -d '{ "parameters": { "question": "What are the top 5 most common alert types?" } }' | jq .
 ```
@@ -87,10 +83,7 @@ curl -sk -u "$AUTH" -X POST "https://localhost:9200/_plugins/_ml/agents/$CONV_AG
 Session 1에서는 1만건 벡터 재인덱싱만 테스트로 돌아갑니다. 강의 전날 밤, 전체 10만건 재인덱싱을 미리 돌려놓으세요.
 
 ```bash
-source .env
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
-
-curl -sk -u "$AUTH" -X POST "https://localhost:9200/_reindex?wait_for_completion=false" \
+curl -s -X POST "http://localhost:9200/_reindex?wait_for_completion=false" \
   -H "Content-Type: application/json" \
   -d '{ "source": { "index": "jjam-siem-logs" }, "dest": { "index": "jjam-siem-vector" } }'
 ```

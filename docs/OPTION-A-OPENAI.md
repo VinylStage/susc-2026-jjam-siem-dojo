@@ -31,11 +31,9 @@ bash scripts/06-register-agents.sh --option a
 ## 연결 테스트
 
 ```bash
-source .env
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
 LLM_MODEL_ID=$(jq -r '.llm_model_id' ids.json)
 
-curl -sk -u "$AUTH" -X POST "https://localhost:9200/_plugins/_ml/models/$LLM_MODEL_ID/_predict" \
+curl -s -X POST "http://localhost:9200/_plugins/_ml/models/$LLM_MODEL_ID/_predict" \
   -H "Content-Type: application/json" \
   -d '{"parameters": {"prompt": "Briefly explain what a DDoS attack is."}}' | jq .
 ```

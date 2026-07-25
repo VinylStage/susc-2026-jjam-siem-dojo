@@ -8,19 +8,18 @@ if [ -f .env ]; then
   set +a
 fi
 
-OS_HOST="https://localhost:9200"
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+OS_HOST="http://localhost:9200"
 
 echo "Waiting for OpenSearch cluster..."
-until curl -sk -u "$AUTH" "$OS_HOST/_cluster/health" | grep -q '"status"'; do
+until curl -s "$OS_HOST/_cluster/health" | grep -q '"status"'; do
   sleep 3
   echo "  still waiting..."
 done
 
-curl -sk -u "$AUTH" "$OS_HOST/_cluster/health" | jq .
+curl -s "$OS_HOST/_cluster/health" | jq .
 
 echo "Registering trusted_connector_endpoints_regex..."
-curl -sk -u "$AUTH" -X PUT "$OS_HOST/_cluster/settings" \
+curl -s -X PUT "$OS_HOST/_cluster/settings" \
   -H "Content-Type: application/json" \
   -d '{
     "persistent": {

@@ -8,8 +8,7 @@ if [ -f .env ]; then
   set +a
 fi
 
-OS_HOST="https://localhost:9200"
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+OS_HOST="http://localhost:9200"
 IDS_FILE="ids.json"
 BUFFER_SECONDS=3600
 # 2026-07-04 실측: historical analysis 조회 구간을 실제 데이터 범위(siem-vary --window, 기본 24h)보다
@@ -28,7 +27,7 @@ register_and_run() {
   FILE="$1"
   KEY="$2"
 
-  CREATE_RESPONSE=$(curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors" \
+  CREATE_RESPONSE=$(curl -s -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors" \
     -H "Content-Type: application/json" \
     --data-binary @"$FILE")
   DETECTOR_ID=$(echo "$CREATE_RESPONSE" | jq -r '._id')
@@ -42,7 +41,7 @@ register_and_run() {
   jq --arg id "$DETECTOR_ID" --arg key "$KEY" '.[$key] = $id' "$IDS_FILE" > "$IDS_FILE.tmp" && mv "$IDS_FILE.tmp" "$IDS_FILE"
 
   echo "Starting historical analysis for $KEY..."
-  curl -sk -u "$AUTH" -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors/$DETECTOR_ID/_start" \
+  curl -s -X POST "$OS_HOST/_plugins/_anomaly_detection/detectors/$DETECTOR_ID/_start" \
     -H "Content-Type: application/json" \
     -d "{ \"start_time\": $START_MS, \"end_time\": $END_MS }" | jq .
 }

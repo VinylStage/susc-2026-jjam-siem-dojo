@@ -4,10 +4,10 @@ services:
     container_name: jjam-opensearch
     environment:
       - discovery.type=single-node
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - DISABLE_SECURITY_PLUGIN=true
       - OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS}
       - plugins.ml_commons.only_run_on_ml_node=false
-      - plugins.ml_commons.model_access_control_enabled=true
+      - plugins.ml_commons.model_access_control_enabled=false
       - plugins.ml_commons.native_memory_threshold=100
       - plugins.ml_commons.jvm_heap_memory_threshold=95
     ulimits:
@@ -29,7 +29,7 @@ services:
     image: opensearchproject/opensearch-dashboards:3.7.0
     container_name: jjam-dashboards
     environment:
-      - OPENSEARCH_HOSTS=["https://opensearch:9200"]
+      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
     ports:
       - "5601:5601"
     depends_on:

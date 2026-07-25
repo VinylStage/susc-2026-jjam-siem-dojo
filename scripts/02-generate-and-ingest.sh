@@ -8,14 +8,13 @@ if [ -f .env ]; then
   set +a
 fi
 
-OS_HOST="https://localhost:9200"
-AUTH="admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+OS_HOST="http://localhost:9200"
 INDEX_NAME="jjam-siem-logs"
 VARIATIONS="${VARIATIONS:-5}"
 WINDOW_SECONDS="${WINDOW_SECONDS:-86400}"
 
 echo "Creating index: $INDEX_NAME"
-curl -sk -u "$AUTH" -X PUT "$OS_HOST/$INDEX_NAME" \
+curl -s -X PUT "$OS_HOST/$INDEX_NAME" \
   -H "Content-Type: application/json" \
   --data-binary @requests/mappings/jjam-siem-logs-mapping.json | jq .
 
@@ -37,7 +36,7 @@ for f in toolkit/siem_data/variations/advanced_siem/*.ndjson; do
   SPLIT_DIR=$(mktemp -d)
   split -l 20000 "$f" "$SPLIT_DIR/part_"
   for part in "$SPLIT_DIR"/part_*; do
-    curl -sk -u "$AUTH" -X POST "$OS_HOST/_bulk" \
+    curl -s -X POST "$OS_HOST/_bulk" \
       -H "Content-Type: application/x-ndjson" \
       --data-binary @"$part" \
       | python3 -c "import sys,json; r=json.load(sys.stdin); print('  chunk errors:', r['errors'], '| took:', r['took'], 'ms')"
@@ -46,4 +45,4 @@ for f in toolkit/siem_data/variations/advanced_siem/*.ndjson; do
 done
 
 echo "Document count:"
-curl -sk -u "$AUTH" "$OS_HOST/$INDEX_NAME/_count" | jq .
+curl -s "$OS_HOST/$INDEX_NAME/_count" | jq .
