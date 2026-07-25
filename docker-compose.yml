@@ -1,6 +1,6 @@
 services:
   opensearch:
-    image: opensearchproject/opensearch:3.5.0
+    image: opensearchproject/opensearch:3.7.0
     container_name: jjam-opensearch
     environment:
       - discovery.type=single-node
@@ -26,7 +26,7 @@ services:
       - jjam-net
 
   dashboards:
-    image: opensearchproject/opensearch-dashboards:3.5.0
+    image: opensearchproject/opensearch-dashboards:3.7.0
     container_name: jjam-dashboards
     environment:
       - OPENSEARCH_HOSTS=["https://opensearch:9200"]
