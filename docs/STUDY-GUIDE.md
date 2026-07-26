@@ -140,6 +140,8 @@ GET jjam-siem-logs/_search
 
 쿼리/집계/Detector 어디서든 `advanced_metadata.risk_score`처럼 점 표기법으로 접근해야 합니다. 최상위 `risk_score`로 검색하면 **에러 없이 조용히 빈 결과만 나오므로** 눈치채기 어렵습니다 — 결과가 이상하게 비어있으면 필드 경로부터 의심하세요. (참고: 이건 Elasticsearch/OpenSearch의 `nested` 타입이 아니라 그냥 `object` 타입이라, 복잡한 `nested` 쿼리 문법 없이 점 표기법만으로 충분합니다.)
 
+전체 필드 목록(이벤트 타입별 전용 필드, `action` 값, 실제 문서 예시)은 [LOG-SCHEMA.md](LOG-SCHEMA.md)에 자세히 정리되어 있습니다.
+
 ---
 
 # Part 2 — Session 2: 벡터 검색, RAG, AI Agent

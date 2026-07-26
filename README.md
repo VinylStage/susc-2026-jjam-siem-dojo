@@ -70,6 +70,7 @@ jjam-siem-dojo/
     ├── EXECUTION-GUIDE.md
     ├── CONFIGURATION.md
     ├── STUDY-GUIDE.md
+    ├── LOG-SCHEMA.md
     ├── OPTION-A-OPENAI.md
     ├── OPTION-B-OLLAMA.md
     ├── OPTION-C-CLAUDE.md
@@ -85,6 +86,8 @@ jjam-siem-dojo/
 
 `risk_score`, `confidence`, `geo_location`은 `advanced_metadata` 객체 하위 필드이고, `baseline_deviation`, `entropy` 등은 `behavioral_analytics` 객체 하위 필드입니다. 쿼리/집계 시 `advanced_metadata.risk_score`처럼 점 표기법으로 접근해야 합니다.
 
+각 필드가 정확히 뭘 의미하는지(이벤트 타입별 전용 필드, `action` 값 목록, 실제 문서 예시 포함)는 [docs/LOG-SCHEMA.md](docs/LOG-SCHEMA.md) 참고.
+
 ## 정리
 
 ```bash
@@ -98,6 +101,7 @@ bash scripts/99-teardown.sh
 | [docs/EXECUTION-GUIDE.md](docs/EXECUTION-GUIDE.md) | 각 단계에서 뭘 하는지, 예상 출력/소요 시간까지 자세히 알고 싶을 때 |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `docker-compose.yml`/`.env`/클러스터 설정이 왜 이렇게 되어 있는지 이해하고 싶을 때 |
 | [docs/STUDY-GUIDE.md](docs/STUDY-GUIDE.md) | 검색엔진·벡터검색·RAG·AI Agent 개념 자체를 처음부터 공부하고 싶을 때(Session 1~2 전체 복습) |
+| [docs/LOG-SCHEMA.md](docs/LOG-SCHEMA.md) | 인덱싱되는 로그 필드가 각각 뭘 의미하는지(필드별 타입/의미/예시) 알고 싶을 때 |
 
 ## 문제 해결
 
