@@ -31,7 +31,7 @@ bash scripts/05-register-llm-connector.sh --option b
 bash scripts/06-register-agents.sh --option b
 ```
 
-`scripts/00-setup.sh`는 `LLM_OPTION=b`일 때 자동으로 `--profile ollama`를 붙여 컨테이너를 띄우지만, 모델 pull은 최초 1회 수동으로 실행해야 합니다(위 `docker exec` 명령).
+`scripts/deploy-all.sh`는 `LLM_OPTION=b`일 때 자동으로 `--profile ollama`를 붙여 컨테이너를 띄우지만, 모델 pull은 최초 1회 수동으로 실행해야 합니다(위 `docker exec` 명령).
 
 ## Connector 구조
 

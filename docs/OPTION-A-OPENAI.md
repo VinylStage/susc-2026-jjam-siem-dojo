@@ -22,7 +22,7 @@ bash scripts/05-register-llm-connector.sh --option a
 bash scripts/06-register-agents.sh --option a
 ```
 
-또는 `scripts/00-setup.sh` 전체 실행 시 `.env`의 `LLM_OPTION=a`만 맞춰두면 자동으로 이 경로를 탑니다.
+또는 `scripts/deploy-all.sh` 전체 실행 시 `.env`의 `LLM_OPTION=a`만 맞춰두면 자동으로 이 경로를 탑니다.
 
 ## 사용 모델
 

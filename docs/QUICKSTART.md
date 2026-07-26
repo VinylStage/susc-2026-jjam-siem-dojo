@@ -31,7 +31,7 @@ cp .env.example .env
 ## 3. 전체 파이프라인 실행
 
 ```bash
-bash scripts/00-setup.sh
+bash scripts/deploy-all.sh
 ```
 
 내부적으로 아래 순서가 자동 실행됩니다.

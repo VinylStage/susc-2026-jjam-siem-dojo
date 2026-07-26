@@ -39,7 +39,7 @@ flowchart TD
 git clone <this-repo-url>
 cd jjam-siem-dojo
 cp .env.example .env
-bash scripts/00-setup.sh
+bash scripts/deploy-all.sh
 ```
 
 ## 레포 구조
@@ -49,7 +49,7 @@ jjam-siem-dojo/
 ├── docker-compose.yml
 ├── .env.example
 ├── scripts/
-│   ├── 00-setup.sh
+│   ├── deploy-all.sh
 │   ├── 01-wait-for-opensearch.sh
 │   ├── 02-generate-and-ingest.sh
 │   ├── 03-register-embedding-model.sh
