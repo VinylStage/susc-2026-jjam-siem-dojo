@@ -88,6 +88,31 @@ curl -s -X POST "http://localhost:9200/_plugins/_anomaly_detection/detectors/$NE
   -d '{"start_time": <07 실행 시 출력된 START_MS>, "end_time": <같은 END_MS>}'
 ```
 
+### Historical Analysis 진행 상태를 API로 확인하려면 (`_profile/ad_task`)
+
+```bash
+DETECTOR_ID=<detector_id>
+curl -s "http://localhost:9200/_plugins/_anomaly_detection/detectors/$DETECTOR_ID/_profile/ad_task" \
+  | jq '{state: .ad_task.ad_task.state, task_progress: .ad_task.ad_task.task_progress, pending_entities: .ad_task.pending_entities_count, running_entities: .ad_task.running_entities_count}'
+```
+
+**주의**: 응답이 `.ad_task.state`가 아니라 **`.ad_task.ad_task.state`로 한 번 더 중첩**되어 있습니다(공식 문서 예시로 확인, 2026-07-26) — `ad_task` 필드 안에 또 `ad_task`라는 키가 있는 구조라 헷갈리기 쉽습니다. 이 레포의 두 detector는 `category_field`가 있는 HC(High-Cardinality/multi-entity) detector라서 `task_type`이 `HISTORICAL_HC_DETECTOR`로 나오고, `pending_entities_count`/`running_entities_count`로 카테고리별(예: `event_type`, `protocol`) 진행 상황도 같이 볼 수 있습니다. `state`가 `FINISHED`면 완료.
+
+### Dashboards에서 detector "Start" 버튼을 눌렀더니 `"Anomaly detector job is already running: <detector_id>"` 에러
+
+Dashboards 목록/상세 화면의 **"Start"는 Historical Analysis가 아니라 실시간(real-time) 감지 job을 켜는 버튼**입니다(`07-create-detectors.sh`가 미리 걸어둔 건 Historical Analysis — 서로 다른 기능, `STUDY-GUIDE.md` §1-5 표 참고). 해당 detector에 이미 Historical Analysis 작업이 돌고 있는 상태에서 실시간 job을 또 걸려고 하면(같은 job 스케줄링 메커니즘을 공유하기 때문에) 이 에러가 납니다. 에러 자체는 정상 동작이고, Historical Analysis가 끝난 detector는 실시간 job도 충돌 없이 걸립니다.
+
+**다만 이 실시간 job을 켤 필요가 이 실습에는 없습니다** — 아래 항목 참고.
+
+### 실시간(Real-time) 감지를 켜면 `INIT` 상태에서 계속 멈춰있음 / 결과가 안 나옴
+
+**정상입니다, 버그 아닙니다.** 이 레포의 데이터는 `siem-vary`가 배포 시점에 딱 한 번만 생성해서 넣는 정적 스냅샷이지, 계속 새로 흘러 들어오는 라이브 인덱스가 아닙니다. 실시간 감지는 `detection_interval`(이 레포는 10분)마다 "방금 들어온 새 문서"를 계속 집계해야 하는데:
+- Cold start(공식 문서: 최대 10,000개의 과거 데이터 포인트로 초기 모델을 미리 학습하는 기능) 자체는 기존 백필 데이터로 일부 진행될 수 있지만,
+- `shingle_size`(기본 8) 개의 **연속된 구간에 데이터가 계속 있어야** 초기화가 끝나는데, 배포 시점 이후로는 새 문서가 안 들어오니 그 다음 구간부터는 빈 버킷만 쌓입니다.
+- 공식 문서도 "`initialization` 상태로 하루 넘게 있으면 데이터 누락 구간부터 의심하라"고 안내할 정도로 흔한 현상이라고 확인됩니다.
+
+**대응**: 그냥 두거나 Stop 시키면 됩니다 — 이 실습에서 필요한 건 `07-create-detectors.sh`가 이미 돌려준 Historical Analysis 결과뿐입니다. 실시간 감지를 실제로 보여주려면 `02-generate-and-ingest.sh`를 주기적으로 반복 실행해서 데이터가 계속 들어오는 것처럼 흉내내야 하는데, 이건 이 강의 범위 밖입니다.
+
 ## LLM Connector
 
 ### 모델 등록이 `until` 루프에서 `state: null`을 반복하며 안 끝남(Ctrl+C 필요)
