@@ -42,7 +42,7 @@
 
 ### 이 레포는 보안 플러그인을 비활성화합니다 (2026-07-24 변경)
 
-실습 난이도를 낮추기 위해 `docker-compose.yml`의 `opensearch` 서비스에 `DISABLE_SECURITY_PLUGIN=true`를 설정했습니다(이전엔 `OPENSEARCH_INITIAL_ADMIN_PASSWORD`만 설정해 보안 플러그인을 기본값(활성화)으로 뒀었는데, 그 방식은 폐기됨). 즉 API는 `http://localhost:9200`으로 인증 없이 바로 접근 가능하고, `curl`에 `-k`나 `-u admin:...`을 붙일 필요가 없습니다. `plugins.ml_commons.model_access_control_enabled`도 `false`로 같이 꺼져 있습니다(보안 플러그인이 꺼진 상태에서 모델 접근제어만 켜두면 의미도 없고 오히려 권한 에러를 유발할 수 있음). **이건 실습 편의를 위한 설정이라 프로덕션에서는 절대 이렇게 쓰면 안 됩니다.**
+실습 난이도를 낮추기 위해 `docker-compose.yml`의 `opensearch` 서비스에 `DISABLE_SECURITY_PLUGIN=true`를 설정했습니다(이전엔 `OPENSEARCH_INITIAL_ADMIN_PASSWORD`만 설정해 보안 플러그인을 기본값(활성화)으로 뒀었는데, 그 방식은 폐기됨). 즉 API는 `http://localhost:9200`으로 인증 없이 바로 접근 가능하고, `curl`에 `-k`나 `-u admin:...`을 붙일 필요가 없습니다. `plugins.ml_commons.model_access_control_enabled`도 `false`로 같이 꺼져 있습니다(보안 플러그인이 꺼진 상태에서 모델 접근제어만 켜두면 의미도 없고 오히려 권한 에러를 유발할 수 있음). **이건 실습 편의를 위한 설정이라 프로덕션에서는 절대 이렇게 쓰면 안 됩니다.** **(2026-07-25 버그 수정)** `DISABLE_SECURITY_PLUGIN=true`는 OpenSearch 노드 쪽만 끄는 설정이고, Dashboards 컨테이너는 자체 보안 플러그인을 따로 갖고 있어서 이것만으로는 Dashboards 로그인 화면이 그대로 뜸(백엔드가 보안 API를 더 이상 안 갖고 있는데 Dashboards만 로그인을 요구하는 상태). `dashboards` 서비스에도 `DISABLE_SECURITY_DASHBOARDS_PLUGIN=true`를 추가해야 완전히 꺼짐 — 둘 다 있어야 함.
 
 ### Connector 호출이 막힘 (trusted_connector_endpoints_regex)
 
