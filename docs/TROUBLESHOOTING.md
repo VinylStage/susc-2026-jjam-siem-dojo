@@ -44,6 +44,10 @@
 
 실습 난이도를 낮추기 위해 `docker-compose.yml`의 `opensearch` 서비스에 `DISABLE_SECURITY_PLUGIN=true`를 설정했습니다(이전엔 `OPENSEARCH_INITIAL_ADMIN_PASSWORD`만 설정해 보안 플러그인을 기본값(활성화)으로 뒀었는데, 그 방식은 폐기됨). 즉 API는 `http://localhost:9200`으로 인증 없이 바로 접근 가능하고, `curl`에 `-k`나 `-u admin:...`을 붙일 필요가 없습니다. `plugins.ml_commons.model_access_control_enabled`도 `false`로 같이 꺼져 있습니다(보안 플러그인이 꺼진 상태에서 모델 접근제어만 켜두면 의미도 없고 오히려 권한 에러를 유발할 수 있음). **이건 실습 편의를 위한 설정이라 프로덕션에서는 절대 이렇게 쓰면 안 됩니다.** **(2026-07-25 버그 수정)** `DISABLE_SECURITY_PLUGIN=true`는 OpenSearch 노드 쪽만 끄는 설정이고, Dashboards 컨테이너는 자체 보안 플러그인을 따로 갖고 있어서 이것만으로는 Dashboards 로그인 화면이 그대로 뜸(백엔드가 보안 API를 더 이상 안 갖고 있는데 Dashboards만 로그인을 요구하는 상태). `dashboards` 서비스에도 `DISABLE_SECURITY_DASHBOARDS_PLUGIN=true`를 추가해야 완전히 꺼짐 — 둘 다 있어야 함.
 
+### ML 요청이 이유 없이 실패/타임아웃 (메모리 서킷브레이커)
+
+ml-commons는 두 가지 메모리 서킷브레이커를 갖고 있습니다: `plugins.ml_commons.native_memory_threshold`(네이티브/OS 메모리, 공식 기본값 90%)와 `plugins.ml_commons.jvm_heap_memory_threshold`(JVM 힙, 공식 기본값 85%). 사용률이 이 값을 넘으면 임베딩/LLM 요청이 조용히 차단됩니다(에러 메시지가 명확하지 않을 수 있음). 이 레포는 작은 실습 환경에서 서킷브레이커가 자꾸 걸리는 걸 막기 위해 두 값을 각각 `100`/`95`로 올려뒀습니다(`docker-compose.yml`의 `opensearch` 서비스 환경변수, [CONFIGURATION.md](CONFIGURATION.md) §1-1 참고) — 즉 이 레포 기본 설정에서는 이 문제가 거의 발생하지 않아야 정상입니다. 그래도 ML 요청이 이상하게 실패하면 `docker stats jjam-opensearch`로 실제 메모리 사용률부터 확인하세요.
+
 ### Connector 호출이 막힘 (trusted_connector_endpoints_regex)
 
 OpenAI/Anthropic/Ollama 엔드포인트가 `plugins.ml_commons.trusted_connector_endpoints_regex`에 등록되어 있지 않으면 Connector의 `_predict` 호출이 차단됩니다. `scripts/01-wait-for-opensearch.sh`가 3개 패턴을 모두 등록하므로, `deploy-all.sh` 없이 스크립트를 개별 실행할 경우 이 단계를 빠뜨리지 마세요.

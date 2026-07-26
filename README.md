@@ -66,6 +66,9 @@ jjam-siem-dojo/
 │   └── agents/
 └── docs/
     ├── QUICKSTART.md
+    ├── EXECUTION-GUIDE.md
+    ├── CONFIGURATION.md
+    ├── STUDY-GUIDE.md
     ├── OPTION-A-OPENAI.md
     ├── OPTION-B-OLLAMA.md
     ├── OPTION-C-CLAUDE.md
@@ -86,6 +89,14 @@ jjam-siem-dojo/
 ```bash
 bash scripts/99-teardown.sh
 ```
+
+## 더 알아보기
+
+| 문서 | 언제 보나 |
+|---|---|
+| [docs/EXECUTION-GUIDE.md](docs/EXECUTION-GUIDE.md) | 각 단계에서 뭘 하는지, 예상 출력/소요 시간까지 자세히 알고 싶을 때 |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `docker-compose.yml`/`.env`/클러스터 설정이 왜 이렇게 되어 있는지 이해하고 싶을 때 |
+| [docs/STUDY-GUIDE.md](docs/STUDY-GUIDE.md) | 검색엔진·벡터검색·RAG·AI Agent 개념 자체를 처음부터 공부하고 싶을 때(Session 1~2 전체 복습) |
 
 ## 문제 해결
 
