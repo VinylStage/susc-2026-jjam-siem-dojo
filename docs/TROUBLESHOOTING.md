@@ -70,6 +70,24 @@ Pretrained 모델(`huggingface/sentence-transformers/all-MiniLM-L12-v2`) 등록�
 
 고장 아닙니다 — `advanced_siem` 샘플 데이터는 실제로 튀는 패턴 없이 랜덤하게만 분포돼 있어서, 조회 기간이 데이터 실제 범위(기본 24h)와 딱 맞으면 RCF가 이상하다고 판단할 게 없어 grade가 계속 0으로 나옵니다(confidence는 0.9대로 높게 나와서 모델 자체는 정상 학습된 상태). 확실하게 grade가 튀는 걸 보려면 조회 기간을 데이터 실제 범위보다 훨씬 넓게(예: 1개월) 잡으세요 — 데이터가 없던 긴 구간에서 갑자기 데이터가 생기는 구간의 경계를 RCF가 자연스럽게 이상치로 잡습니다. `scripts/07-create-detectors.sh`는 `HISTORICAL_LOOKBACK_SECONDS`(기본 2592000초=30일)로 이미 이렇게 동작합니다. Dashboards UI에서 수동으로 조회할 땐 detector 상세 화면의 "Modify historical analysis range"로 기간을 넓히면 됩니다.
 
+### 두 번째 Detector의 Historical Analysis가 `"No available task slot"` (400)로 실패
+
+`07-create-detectors.sh`는 `severity_detector_id`를 만들고 바로 Historical Analysis를 `_start`한 다음, 완료를 기다리지 않고 곧바로 `network_detector_id`도 만들어서 `_start`합니다. AD 플러그인의 `plugins.anomaly_detection.max_batch_task_per_node`(노드당 동시 실행 가능한 batch task 수) 기본값이 **1**이라, 첫 번째 Historical Analysis가 아직 실행 중일 때 두 번째를 시작하려 하면 이 에러가 납니다. 첫 번째 detector(위 로그에서 `severity_detector_id`)는 정상적으로 등록·시작됐고, 두 번째(`network_detector_id`)만 Historical Analysis 시작에 실패한 상태입니다(detector 자체는 만들어졌으니 아래 재시도만 하면 됨).
+
+**2026-07-26부터**: `scripts/01-wait-for-opensearch.sh`가 `plugins.anomaly_detection.max_batch_task_per_node`를 `2`로 올려두도록 수정되어, `01`부터 새로 배포하면 이 문제가 재현되지 않습니다.
+
+**이미 이 에러를 겪었다면(구버전 `01` 실행 후)**: 컨테이너를 처음부터 다시 올릴 필요 없이, 클러스터 설정만 올리고 실패한 detector만 재시작하면 됩니다:
+```bash
+curl -s -X PUT "http://localhost:9200/_cluster/settings" \
+  -H "Content-Type: application/json" \
+  -d '{"persistent": {"plugins.anomaly_detection.max_batch_task_per_node": 2}}'
+
+NETWORK_DETECTOR_ID=$(jq -r '.network_detector_id' ids.json)
+curl -s -X POST "http://localhost:9200/_plugins/_anomaly_detection/detectors/$NETWORK_DETECTOR_ID/_start" \
+  -H "Content-Type: application/json" \
+  -d '{"start_time": <07 실행 시 출력된 START_MS>, "end_time": <같은 END_MS>}'
+```
+
 ## LLM Connector
 
 ### 모델 등록이 `until` 루프에서 `state: null`을 반복하며 안 끝남(Ctrl+C 필요)

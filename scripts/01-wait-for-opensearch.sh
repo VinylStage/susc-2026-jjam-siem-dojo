@@ -28,7 +28,8 @@ curl -s -X PUT "$OS_HOST/_cluster/settings" \
         "^https://api\\.openai\\.com/.*$",
         "^https://api\\.anthropic\\.com/.*$",
         "^http://ollama:11434/.*$"
-      ]
+      ],
+      "plugins.anomaly_detection.max_batch_task_per_node": 2
     }
   }' | jq .
 
