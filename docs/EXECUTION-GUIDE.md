@@ -115,7 +115,7 @@ bash scripts/07-create-detectors.sh
 
 | 항목 | 내용 |
 |---|---|
-| 하는 일 | severity/network 이상탐지 Detector 2종 등록 → 각각 Historical Analysis 자동 시작(조회 구간 기본 30일) |
+| 하는 일 | (등록 전 `plugins.anomaly_detection.max_batch_task_per_node` 방어적 재등록) → severity/network 이상탐지 Detector 2종 등록 → 각각 Historical Analysis 자동 시작(조회 구간 기본 30일) |
 | 예상 출력 | `severity_detector_id: <ID>` → 시작 결과 JSON → `network_detector_id: <ID>` → 시작 결과 JSON → `Detectors created and historical analysis started.` |
 | 소요 | 몇 초(분석 자체는 백그라운드에서 계속 진행) |
 | 확인 | Dashboards(`http://localhost:5601`) → Anomaly Detection → 두 detector가 목록에 보이고 Historical Analysis 진행 중/완료 상태인지 |

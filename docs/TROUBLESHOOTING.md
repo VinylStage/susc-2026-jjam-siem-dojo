@@ -76,6 +76,10 @@ Pretrained 모델(`huggingface/sentence-transformers/all-MiniLM-L12-v2`) 등록�
 
 **2026-07-26부터**: `scripts/01-wait-for-opensearch.sh`가 `plugins.anomaly_detection.max_batch_task_per_node`를 `2`로 올려두도록 수정되어, `01`부터 새로 배포하면 이 문제가 재현되지 않습니다.
 
+**그런데도 다시 발생한다면(2026-07-26 실측)**: `plugins.anomaly_detection.max_batch_task_per_node`는 **persistent 클러스터 설정** — OpenSearch 데이터 볼륨에 저장됩니다. `scripts/99-teardown.sh`는 `docker compose down -v`로 **볼륨까지 삭제**하므로, teardown 이후 컨테이너를 새로 올리면 이 설정도 같이 사라져서 기본값(1)로 돌아갑니다. 이 상태에서 `01-wait-for-opensearch.sh`를 다시 거치지 않고 `02`~`07`만 재실행하면(예: 임베딩/LLM 단계만 다시 확인하려고 03부터 실행) 이 에러가 똑같이 재발합니다 — 회귀가 아니라 **`01`을 안 거쳤기 때문**입니다.
+
+이걸 매번 신경 쓰지 않도록, `07-create-detectors.sh` 자신도 detector 등록 전에 이 설정을 방어적으로 한 번 더 PUT하도록 수정했습니다(이미 2로 되어 있으면 그냥 덮어쓸 뿐 무해) — 그래서 `01`을 건너뛰고 `07`까지 왔어도 이제는 자동으로 안전합니다. **원칙은 여전히**: teardown 이후에는 `02`부터가 아니라 `bash scripts/deploy-all.sh`(또는 최소 `00`+`01`부터)로 처음부터 다시 실행하는 것.
+
 **이미 이 에러를 겪었다면(구버전 `01` 실행 후)**: 컨테이너를 처음부터 다시 올릴 필요 없이, 클러스터 설정만 올리고 실패한 detector만 재시작하면 됩니다:
 ```bash
 curl -s -X PUT "http://localhost:9200/_cluster/settings" \

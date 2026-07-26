@@ -11,6 +11,14 @@ fi
 OS_HOST="http://localhost:9200"
 IDS_FILE="ids.json"
 BUFFER_SECONDS=3600
+
+# 방어적 재등록: teardown(docker compose down -v)은 볼륨을 지우므로 01-wait-for-opensearch.sh가
+# 등록해둔 persistent 클러스터 설정도 같이 날아감. 01을 다시 안 거치고 02~07만 재실행하는 경우에도
+# 이 값이 기본 1로 돌아가 있으면 아래 두 detector 중 두 번째가 "No available task slot"로 실패하므로
+# (2026-07-26 실측) 07 자신도 방어적으로 한 번 더 등록해둠. 이미 2로 되어 있으면 그냥 덮어쓸 뿐 무해.
+curl -s -X PUT "$OS_HOST/_cluster/settings" \
+  -H "Content-Type: application/json" \
+  -d '{"persistent": {"plugins.anomaly_detection.max_batch_task_per_node": 2}}' > /dev/null
 # 2026-07-04 실측: historical analysis 조회 구간을 실제 데이터 범위(siem-vary --window, 기본 24h)보다
 # 훨씬 넓게 잡으면(데이터 없는 구간 -> 갑자기 데이터 있는 구간 전환) RCF가 그 경계를 자연스럽게 anomaly로 잡음.
 # 라이브 데모에서 "데이터가 없다가 갑자기 생기는 지점"이 grade 1.0으로 튀는 걸 보여주는 용도 — 별도 스파이크 주입 없이도 재현됨.
