@@ -73,7 +73,7 @@ WINDOW_SECONDS=86400
 | 변수 | 기본값 | 어디서 쓰이나 | 설명 |
 |---|---|---|---|
 | `OPENSEARCH_JAVA_OPTS` | `"-Xms2g -Xmx2g"` | `docker-compose.yml`의 `opensearch` 서비스 | JVM 힙 최소/최대 크기. **반드시 따옴표로 감쌀 것** — 공백 포함 값을 따옴표 없이 `export`하면 뒤 토큰이 별도 명령으로 실행되려다 실패합니다(`docs/TROUBLESHOOTING.md` 참고). 컴퓨터 메모리가 넉넉하면 `-Xms4g -Xmx4g`처럼 올려도 됩니다(호스트 RAM의 절반 이하 권장, OpenSearch 공식 가이드라인). |
-| `LLM_OPTION` | `a` | `00`(컨테이너 profile 결정), `05`,`06`(--option 값), `deploy-all.sh`(전달만) | `a`=OpenAI, `b`=Ollama, `c`=Claude API. 어느 LLM Connector/모델을 등록할지 결정. `01`은 이 값과 무관하게 3개 프로바이더 패턴을 전부 등록함. |
+| `LLM_OPTION` | `a` | `00`(컨테이너 profile 결정), `05`,`06`(--option 값, 플래그 생략 시 이 값으로 폴백), `deploy-all.sh`(전달만) | `a`=OpenAI, `b`=Ollama, `c`=Claude API. 어느 LLM Connector/모델을 등록할지 결정. `01`은 이 값과 무관하게 3개 프로바이더 패턴을 전부 등록함. **05/06을 개별 실행할 땐 여전히 `--option`을 명시하는 걸 권장** — 플래그 없이 실행하면 `.env`의 이 값을 자동으로 쓰지만(2026-07-26 수정 전에는 무조건 `a`로 고정되는 버그가 있었음), 명시하는 쪽이 실수를 줄임. |
 | `OPENAI_API_KEY` | (비어있음) | `05-register-llm-connector.sh --option a` | Option A 사용 시 필수. |
 | `ANTHROPIC_API_KEY` | (비어있음) | `05-register-llm-connector.sh --option c` | Option C 사용 시 필수. |
 | `OLLAMA_MODEL` | `qwen2.5:7b` | `05-register-llm-connector.sh --option b` | Option B 사용 시 어떤 모델을 커넥터에 연결할지. RAM에 맞게 조정([docs/OPTION-B-OLLAMA.md](OPTION-B-OLLAMA.md) 표 참고). |

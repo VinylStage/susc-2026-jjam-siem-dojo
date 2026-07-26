@@ -8,7 +8,7 @@ if [ -f .env ]; then
   set +a
 fi
 
-OPTION="a"
+OPTION="${LLM_OPTION:-a}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --option) OPTION="$2"; shift 2 ;;
