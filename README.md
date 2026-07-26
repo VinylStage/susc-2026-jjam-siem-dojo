@@ -50,6 +50,7 @@ jjam-siem-dojo/
 ├── .env.example
 ├── scripts/
 │   ├── deploy-all.sh
+│   ├── 00-start-containers.sh
 │   ├── 01-wait-for-opensearch.sh
 │   ├── 02-generate-and-ingest.sh
 │   ├── 03-register-embedding-model.sh

@@ -33,9 +33,7 @@ bash scripts/deploy-all.sh
 ### 방법 B — 한 단계씩 (뭘 하는지 보면서 배우고 싶을 때)
 
 ```bash
-docker compose up -d                      # Option A, C
-# 또는: docker compose --profile ollama up -d   # Option B
-
+bash scripts/00-start-containers.sh
 bash scripts/01-wait-for-opensearch.sh
 bash scripts/02-generate-and-ingest.sh
 bash scripts/03-register-embedding-model.sh
@@ -49,13 +47,13 @@ bash scripts/07-create-detectors.sh
 
 ## 단계별 상세
 
-### 0단계 — 컨테이너 기동
+### 0단계 — `00-start-containers.sh`
 
 | 항목 | 내용 |
 |---|---|
-| 명령 | `docker compose up -d` (Option B는 `--profile ollama` 추가) |
-| 하는 일 | `opensearch`, `dashboards` 컨테이너 기동 (Option B는 `ollama`도) |
-| 확인 | `docker ps` — `jjam-opensearch`, `jjam-dashboards`가 `Up` 상태 |
+| 명령 | `bash scripts/00-start-containers.sh` |
+| 하는 일 | `toolkit/` 클론 여부 확인 → `ids.json` 초기화(`{}`) → `.env`의 `LLM_OPTION`을 읽어 `opensearch`/`dashboards` 컨테이너 기동(Option B는 `ollama`도 `--profile ollama`로 같이 기동) |
+| 확인 | `docker ps` — `jjam-opensearch`, `jjam-dashboards`가 `Up` 상태(Option B는 `jjam-ollama`도) |
 | 소요 | 10~30초 |
 
 ### 1단계 — `01-wait-for-opensearch.sh`

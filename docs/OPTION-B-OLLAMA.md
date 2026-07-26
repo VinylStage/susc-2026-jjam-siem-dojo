@@ -24,7 +24,7 @@ OLLAMA_MODEL=qwen2.5:7b
 ## 실행
 
 ```bash
-docker compose --profile ollama up -d
+bash scripts/00-start-containers.sh
 docker exec jjam-ollama ollama pull qwen2.5:7b
 
 bash scripts/05-register-llm-connector.sh --option b
