@@ -86,7 +86,7 @@ ml-commons는 Connector에 `credential` 필드가 무조건 있어야 통과시�
 
 ### `Remote inference host name has private ip address: host.docker.internal` (또는 LAN IP)
 
-ml-commons는 기본적으로 사설 IP/루프백 계열 호스트로의 아웃바운드 호출을 막습니다(SSRF 방지). `plugins.ml_commons.connector.private_ip_enabled: true`를 클러스터 설정에 추가해야 하며(이미 `01-wait-for-opensearch.sh`에 포함됨), **이미 컨테이너가 떠 있는 상태에서 이 설정을 나중에 켰다면 컨테이너를 재시작해야 반영되는 것으로 확인됐습니다**(OpenSearch 3.7.0에서 실측 — 설정 자체는 `acknowledged: true`로 성공하고 클러스터 로그에도 반영되는데, 이미 초기화된 HTTP 클라이언트 경로에는 실시간 반영이 안 됨). 처음부터 `deploy-all.sh`/`01-wait-for-opensearch.sh`로 컨테이너를 켜는 정상 플로우라면 이 설정이 커넥터 사용 전에 이미 적용되어 있으니 문제 없지만, 디버깅 중 설정을 나중에 바꿨다면 `docker compose restart` 후 모델을 다시 `_deploy`하고 재시도하세요.
+ml-commons는 기본적으로 사설 IP/루프백 계열 호스트로의 아웃바운드 호출을 막습니다(SSRF 방지). `plugins.ml_commons.connector.private_ip_enabled: true`를 클러스터 설정에 추가해야 하며(이미 `01-wait-for-opensearch.sh`에 포함됨), **이미 컨테이너가 떠 있는 상태에서 이 설정을 나중에 켰다면 컨테이너를 재시작해야 반영되는 것으로 확인됐습니다**(OpenSearch 3.7.0에서 실측 — 설정 자체는 `acknowledged: true`로 성공하고 클러스터 로그에도 반영되는데, 이미 초기화된 HTTP 클라이언트 경로에는 실시간 반영이 안 됨). 처음부터 `deploy-all.sh`(내부적으로 `00-start-containers.sh` → `01-wait-for-opensearch.sh` 순서)로 컨테이너를 켜는 정상 플로우라면 이 설정이 커넥터 사용 전에 이미 적용되어 있으니 문제 없지만, 디버깅 중 설정을 나중에 바꿨다면 `docker compose restart` 후 모델을 다시 `_deploy`하고 재시도하세요.
 
 ### Option B(Ollama) 응답이 없거나 매우 느림
 

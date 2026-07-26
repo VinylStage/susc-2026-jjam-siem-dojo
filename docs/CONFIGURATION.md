@@ -54,7 +54,7 @@ environment:
   - OLLAMA_HOST=0.0.0.0
 ```
 
-`profiles: [ollama]`가 핵심 — Docker Compose의 프로필 기능으로, `docker compose up -d`만 실행하면 이 서비스는 **뜨지 않습니다**. `docker compose --profile ollama up -d`처럼 프로필을 명시해야만 같이 뜹니다. 이 레포에서는 `.env`의 `LLM_OPTION=b`(Ollama)를 선택한 사람만 이 컨테이너가 필요하므로, `scripts/deploy-all.sh`가 `LLM_OPTION` 값을 보고 자동으로 `--profile ollama` 여부를 결정합니다. `OLLAMA_HOST=0.0.0.0`은 Ollama가 컨테이너 내부 어느 인터페이스에서든 요청을 받게 하는 설정(컨테이너 기본값은 localhost만 바인딩이라 다른 컨테이너에서 접근이 안 될 수 있음).
+`profiles: [ollama]`가 핵심 — Docker Compose의 프로필 기능으로, `docker compose up -d`만 실행하면 이 서비스는 **뜨지 않습니다**. `docker compose --profile ollama up -d`처럼 프로필을 명시해야만 같이 뜹니다. 이 레포에서는 `.env`의 `LLM_OPTION=b`(Ollama)를 선택한 사람만 이 컨테이너가 필요하므로, `scripts/00-start-containers.sh`가 `LLM_OPTION` 값을 보고 자동으로 `--profile ollama` 여부를 결정합니다. `OLLAMA_HOST=0.0.0.0`은 Ollama가 컨테이너 내부 어느 인터페이스에서든 요청을 받게 하는 설정(컨테이너 기본값은 localhost만 바인딩이라 다른 컨테이너에서 접근이 안 될 수 있음).
 
 ---
 
@@ -73,7 +73,7 @@ WINDOW_SECONDS=86400
 | 변수 | 기본값 | 어디서 쓰이나 | 설명 |
 |---|---|---|---|
 | `OPENSEARCH_JAVA_OPTS` | `"-Xms2g -Xmx2g"` | `docker-compose.yml`의 `opensearch` 서비스 | JVM 힙 최소/최대 크기. **반드시 따옴표로 감쌀 것** — 공백 포함 값을 따옴표 없이 `export`하면 뒤 토큰이 별도 명령으로 실행되려다 실패합니다(`docs/TROUBLESHOOTING.md` 참고). 컴퓨터 메모리가 넉넉하면 `-Xms4g -Xmx4g`처럼 올려도 됩니다(호스트 RAM의 절반 이하 권장, OpenSearch 공식 가이드라인). |
-| `LLM_OPTION` | `a` | 모든 스크립트(01,05,06)와 `deploy-all.sh` | `a`=OpenAI, `b`=Ollama, `c`=Claude API. 어느 LLM Connector/모델을 등록할지 결정. |
+| `LLM_OPTION` | `a` | `00`(컨테이너 profile 결정), `05`,`06`(--option 값), `deploy-all.sh`(전달만) | `a`=OpenAI, `b`=Ollama, `c`=Claude API. 어느 LLM Connector/모델을 등록할지 결정. `01`은 이 값과 무관하게 3개 프로바이더 패턴을 전부 등록함. |
 | `OPENAI_API_KEY` | (비어있음) | `05-register-llm-connector.sh --option a` | Option A 사용 시 필수. |
 | `ANTHROPIC_API_KEY` | (비어있음) | `05-register-llm-connector.sh --option c` | Option C 사용 시 필수. |
 | `OLLAMA_MODEL` | `qwen2.5:7b` | `05-register-llm-connector.sh --option b` | Option B 사용 시 어떤 모델을 커넥터에 연결할지. RAM에 맞게 조정([docs/OPTION-B-OLLAMA.md](OPTION-B-OLLAMA.md) 표 참고). |
@@ -112,7 +112,7 @@ PUT _cluster/settings
 
 ## 4. `ids.json` — 스크립트 간 상태 전달 파일
 
-각 스크립트가 생성한 ID를 다음 스크립트가 읽어 쓸 수 있도록 저장하는 파일입니다. `scripts/deploy-all.sh`(또는 `01-wait-for-opensearch.sh`)가 처음에 `{}`로 초기화합니다.
+각 스크립트가 생성한 ID를 다음 스크립트가 읽어 쓸 수 있도록 저장하는 파일입니다. `scripts/00-start-containers.sh`가 컨테이너를 띄우기 직전에 `{}`로 초기화합니다.
 
 | 키 | 어느 스크립트가 쓰나 | 어느 스크립트가 읽나 |
 |---|---|---|
