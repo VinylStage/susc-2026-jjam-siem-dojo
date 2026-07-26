@@ -72,25 +72,34 @@ Pretrained 모델(`huggingface/sentence-transformers/all-MiniLM-L12-v2`) 등록�
 
 ### 두 번째 Detector의 Historical Analysis가 `"No available task slot"` (400)로 실패
 
-`07-create-detectors.sh`는 `severity_detector_id`를 만들고 바로 Historical Analysis를 `_start`한 다음, 완료를 기다리지 않고 곧바로 `network_detector_id`도 만들어서 `_start`합니다. AD 플러그인의 `plugins.anomaly_detection.max_batch_task_per_node`(노드당 동시 실행 가능한 batch task 수) 기본값이 **1**이라, 첫 번째 Historical Analysis가 아직 실행 중일 때 두 번째를 시작하려 하면 이 에러가 납니다. 첫 번째 detector(위 로그에서 `severity_detector_id`)는 정상적으로 등록·시작됐고, 두 번째(`network_detector_id`)만 Historical Analysis 시작에 실패한 상태입니다(detector 자체는 만들어졌으니 아래 재시도만 하면 됨).
+`07-create-detectors.sh`는 `severity_detector_id`를 만들고 바로 Historical Analysis를 `_start`한 다음, 완료를 기다리지 않고 곧바로 `network_detector_id`도 만들어서 `_start`합니다. 첫 번째 detector(위 로그에서 `severity_detector_id`)는 정상적으로 등록·시작됐고, 두 번째(`network_detector_id`)만 Historical Analysis 시작에 실패한 상태입니다(detector 자체는 만들어졌으니 아래 재시도만 하면 됨).
 
-**2026-07-26부터**: `scripts/01-wait-for-opensearch.sh`가 `plugins.anomaly_detection.max_batch_task_per_node`를 `2`로 올려두도록 수정되어, `01`부터 새로 배포하면 이 문제가 재현되지 않습니다.
+**진짜 원인(2026-07-26, AD 플러그인 소스코드 `ADTaskManager.java`까지 확인해서 정정)**: 처음엔 `plugins.anomaly_detection.max_batch_task_per_node`(노드당 동시 batch task 수, 기본값 **1**)만 올리면 될 줄 알았는데, **그것만으론 부족했습니다**. 이유: 이 레포의 두 detector는 둘 다 `category_field`가 있는 **HC(high-cardinality/multi-entity) detector**인데, HC detector가 Historical Analysis를 시작할 때는 슬롯 1개가 아니라
 
-**그런데도 다시 발생한다면(2026-07-26 실측)**: `plugins.anomaly_detection.max_batch_task_per_node`는 **persistent 클러스터 설정** — OpenSearch 데이터 볼륨에 저장됩니다. `scripts/99-teardown.sh`는 `docker compose down -v`로 **볼륨까지 삭제**하므로, teardown 이후 컨테이너를 새로 올리면 이 설정도 같이 사라져서 기본값(1)로 돌아갑니다. 이 상태에서 `01-wait-for-opensearch.sh`를 다시 거치지 않고 `02`~`07`만 재실행하면(예: 임베딩/LLM 단계만 다시 확인하려고 03부터 실행) 이 에러가 똑같이 재발합니다 — 회귀가 아니라 **`01`을 안 거쳤기 때문**입니다.
+```
+min(plugins.anomaly_detection.max_running_entities_per_detector_for_historical_analysis, 그 시점의 가용 슬롯)
+```
 
-이걸 매번 신경 쓰지 않도록, `07-create-detectors.sh` 자신도 detector 등록 전에 이 설정을 방어적으로 한 번 더 PUT하도록 수정했습니다(이미 2로 되어 있으면 그냥 덮어쓸 뿐 무해) — 그래서 `01`을 건너뛰고 `07`까지 왔어도 이제는 자동으로 안전합니다. **원칙은 여전히**: teardown 이후에는 `02`부터가 아니라 `bash scripts/deploy-all.sh`(또는 최소 `00`+`01`부터)로 처음부터 다시 실행하는 것.
+개를 **한 번에 예약**합니다. 이 설정의 기본값은 **10**입니다. 즉 `max_batch_task_per_node`를 2로만 올려도, 먼저 시작하는 detector가 그 순간의 가용 슬롯(2)을 `min(10, 2)=2`로 **전부** 선점해버려서 두 번째 detector 몫이 0이 됩니다 — `max_batch_task_per_node`를 10 이하 어떤 값으로 올려도 첫 detector가 항상 전부 가져가므로, 총량만 올리는 접근 자체가 구조적으로 안 통합니다.
 
-**이미 이 에러를 겪었다면(구버전 `01` 실행 후)**: 컨테이너를 처음부터 다시 올릴 필요 없이, 클러스터 설정만 올리고 실패한 detector만 재시작하면 됩니다:
+**정정된 조치**: `max_running_entities_per_detector_for_historical_analysis`를 `2`로 낮춰서 detector 하나당 최대 2슬롯까지만 선점하게 하고, `max_batch_task_per_node`는 `4`(=detector 2개 × 슬롯 cap 2)로 맞춰서 두 detector가 동시에 각자 슬롯을 확보할 수 있도록 했습니다. `scripts/01-wait-for-opensearch.sh`와 `scripts/07-create-detectors.sh`(teardown으로 volume이 지워진 경우를 위한 방어적 재등록) 둘 다 이 두 설정을 같이 등록합니다.
+
+**이미 이 에러를 겪었다면**: 컨테이너를 처음부터 다시 올릴 필요 없이, 클러스터 설정 두 개를 올리고 실패한 detector만 재시작하면 됩니다:
 ```bash
 curl -s -X PUT "http://localhost:9200/_cluster/settings" \
   -H "Content-Type: application/json" \
-  -d '{"persistent": {"plugins.anomaly_detection.max_batch_task_per_node": 2}}'
+  -d '{"persistent": {
+    "plugins.anomaly_detection.max_batch_task_per_node": 4,
+    "plugins.anomaly_detection.max_running_entities_per_detector_for_historical_analysis": 2
+  }}'
 
 NETWORK_DETECTOR_ID=$(jq -r '.network_detector_id' ids.json)
 curl -s -X POST "http://localhost:9200/_plugins/_anomaly_detection/detectors/$NETWORK_DETECTOR_ID/_start" \
   -H "Content-Type: application/json" \
   -d '{"start_time": <07 실행 시 출력된 START_MS>, "end_time": <같은 END_MS>}'
 ```
+
+**detector를 더 추가한다면**: `max_batch_task_per_node`가 최소 `(detector 개수) × max_running_entities_per_detector_for_historical_analysis` 이상이어야 전부 동시에 돌 수 있습니다.
 
 ### Historical Analysis 진행 상태를 API로 확인하려면 (`_profile/ad_task`)
 

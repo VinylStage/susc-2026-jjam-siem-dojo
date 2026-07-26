@@ -96,7 +96,8 @@ PUT _cluster/settings
       "^https://api\\.anthropic\\.com/.*$",
       "^http://ollama:11434/.*$"
     ],
-    "plugins.anomaly_detection.max_batch_task_per_node": 2
+    "plugins.anomaly_detection.max_batch_task_per_node": 4,
+    "plugins.anomaly_detection.max_running_entities_per_detector_for_historical_analysis": 2
   }
 }
 ```
@@ -105,7 +106,8 @@ PUT _cluster/settings
 |---|---|---|
 | `plugins.ml_commons.connector.private_ip_enabled` | `false`(공식 문서 확인) | ML 커넥터가 사설 IP/루프백 주소로 나가는 요청을 막는 SSRF 방지 장치. 우리 Ollama가 `ollama:11434`라는 컨테이너 내부(사설) 주소라서, 이 값을 `true`로 켜야 접근이 허용됩니다. Option A/C(외부 공인 API)만 쓴다면 이론상 몰라도 되지만, 이 레포는 세 옵션을 다 지원해야 해서 항상 켜둡니다. |
 | `plugins.ml_commons.trusted_connector_endpoints_regex` | 기본 내장 리스트(AWS/OpenAI/Cohere 패턴 등, 비어있지 않음 — 공식 문서 확인) | ML 커넥터가 호출을 허용받는 외부 엔드포인트의 정규식 화이트리스트. 기본 리스트에 Anthropic·로컬 Ollama 패턴이 없기 때문에, 이 레포는 3개 패턴(OpenAI/Anthropic/Ollama)을 명시적으로 등록합니다. **이 등록이 없으면 05번 Connector 단계 이후 `_predict` 호출이 조용히 막힙니다** — Connector 자체는 등록에 성공하는데 실제 호출만 거부되는 형태라 헷갈리기 쉬운 실패 패턴. |
-| `plugins.anomaly_detection.max_batch_task_per_node` | `1`(공식 소스 코드 확인, `AnomalyDetectorSettings.java`) | 노드 하나당 동시에 돌릴 수 있는 Historical Analysis(batch task) 개수 제한. 기본값 1이면 `07-create-detectors.sh`가 만드는 2개 detector(`severity`, `network`)의 Historical Analysis를 연달아 `_start`할 때, 첫 번째가 끝나기 전에 두 번째를 시작하려다 `"No available task slot"` 400 에러가 납니다(2026-07-26 실측 확인). 이 레포는 detector가 정확히 2개라서 `2`로 올려 둘 다 동시에 돌게 했습니다. detector를 더 추가한다면 이 값도 같이 올려야 합니다. **이 설정은 persistent이지만 `99-teardown.sh`(`docker compose down -v`)로 볼륨을 지우면 같이 사라짐** — `01`을 안 거치고 `07`만 실행해도 안전하도록 `07-create-detectors.sh`도 detector 등록 전에 이 값을 방어적으로 한 번 더 등록합니다. |
+| `plugins.anomaly_detection.max_batch_task_per_node` | `1`(공식 소스 코드 확인, `AnomalyDetectorSettings.java`) | 노드 하나당 동시 실행 가능한 Historical Analysis(batch task) "총 슬롯 수". |
+| `plugins.anomaly_detection.max_running_entities_per_detector_for_historical_analysis` | `10`(공식 소스 코드 확인) | HC(`category_field` 있는) detector 하나가 Historical Analysis 시작 시 한 번에 예약하는 슬롯 개수 — `min(이 값, 그 시점의 가용 슬롯)`만큼 선점. **이 레포가 두 설정을 같이 건드리는 이유(2026-07-26, AD 플러그인 소스코드까지 확인해서 정정)**: 처음엔 `max_batch_task_per_node`만 2로 올렸는데도 `"No available task slot"`이 재발했습니다 — 이유는 severity/network 두 detector가 전부 HC detector라, 먼저 시작하는 쪽이 그 순간 가용 슬롯을 `min(10, 2)=2`로 전부 가져가버려서(기본값 10이 훨씬 크기 때문에 총량을 10 이하로 올리는 한 항상 이런 식으로 전부 가져감) 두 번째 detector 몫이 0이 되는 구조적 문제였습니다. 그래서 `max_running_entities_per_detector_for_historical_analysis`를 `2`로 낮춰 detector당 예약량을 제한하고, `max_batch_task_per_node`는 `4`(= detector 2개 × 슬롯 cap 2)로 맞춰 둘 다 동시에 돌 수 있게 했습니다. 이 설정들은 persistent이지만 `99-teardown.sh`(`docker compose down -v`)로 볼륨을 지우면 같이 사라지므로, `01`을 안 거치고 `07`만 실행해도 안전하도록 `07-create-detectors.sh`도 detector 등록 전에 방어적으로 한 번 더 등록합니다. detector를 더 추가한다면 `max_batch_task_per_node ≥ (detector 개수) × max_running_entities_per_detector_for_historical_analysis`가 되도록 같이 올려야 합니다. |
 
 **참고 — `agent_framework_enabled` / `rag_pipeline_feature_enabled`를 왜 이 레포는 안 켜나요?**
 공식 [OpenSearch Assistant Toolkit 가이드](https://docs.opensearch.org/latest/ml-commons-plugin/opensearch-assistant/)는 이 두 설정을 `true`로 켜는 걸 사전 준비 단계로 안내합니다. 하지만 **OpenSearch 3.7.0 기준 두 설정의 실제 기본값은 이미 `true`**입니다(ml-commons 소스 코드 확인) — 즉 이 레포처럼 아무것도 설정하지 않아도 Agent Framework와 RAG 파이프라인은 이미 켜져 있는 상태입니다. `homelab-two-node`(강사 환경)는 이 두 값을 방어적으로 명시하는데, 이는 안전을 위한 관례이지 우리 레포에 기능적 결함이 있다는 뜻은 아닙니다.
