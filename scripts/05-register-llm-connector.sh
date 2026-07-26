@@ -22,7 +22,12 @@ MODEL_GROUP_ID=$(jq -r '.model_group_id' "$IDS_FILE")
 
 case "$OPTION" in
   a)
-    jq --arg key "${OPENAI_API_KEY:-}" '.credential.openAI_key = $key' \
+    if [ -z "${OPENAI_API_KEY:-}" ]; then
+      echo "ERROR: OPENAI_API_KEY가 .env에 비어 있습니다."
+      echo "  https://platform.openai.com/account/api-keys 에서 키를 발급받아 .env의 OPENAI_API_KEY=에 채운 뒤 다시 실행하세요."
+      exit 1
+    fi
+    jq --arg key "$OPENAI_API_KEY" '.credential.openAI_key = $key' \
       requests/connectors/openai-connector.json > /tmp/jjam-connector.json
     RESPONSE_FILTER='$.choices[0].message.content'
     ;;
@@ -32,7 +37,12 @@ case "$OPTION" in
     RESPONSE_FILTER='$.choices[0].message.content'
     ;;
   c)
-    jq --arg key "${ANTHROPIC_API_KEY:-}" '.credential.anthropic_key = $key' \
+    if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+      echo "ERROR: ANTHROPIC_API_KEY가 .env에 비어 있습니다."
+      echo "  https://console.anthropic.com/settings/keys 에서 키를 발급받아 .env의 ANTHROPIC_API_KEY=에 채운 뒤 다시 실행하세요."
+      exit 1
+    fi
+    jq --arg key "$ANTHROPIC_API_KEY" '.credential.anthropic_key = $key' \
       requests/connectors/claude-connector.json > /tmp/jjam-connector.json
     RESPONSE_FILTER='$.content[0].text'
     ;;
